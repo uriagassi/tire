@@ -106,6 +106,11 @@ module Tire
         @fields = Array(fields.flatten)
         self
       end
+  
+      def partial_field(name, options)
+        @partial_fields ||= {}
+        @partial_fields[name] = options
+      end
 
       def partial_field(name, options)
         @partial_fields ||= {}
