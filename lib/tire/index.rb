@@ -64,22 +64,27 @@ module Tire
 
     def store(*args)
       document, options = args
-      type = get_type_from_document(document)
-
-      if options
-        percolate = options[:percolate]
-        percolate = "*" if percolate === true
-      end
 
       id       = get_id_from_document(document)
+      type     = get_type_from_document(document)
       document = convert_document_to_json(document)
 
-      url  = id ? "#{self.url}/#{type}/#{id}" : "#{self.url}/#{type}/"
-      url += "?percolate=#{percolate}" if percolate
+      options ||= {}
+      params    = {}
+
+      if options[:percolate]
+        params[:percolate] = options[:percolate]
+        params[:percolate] = "*" if params[:percolate] === true
+      end
+
+      params[:parent] = options[:parent] if options[:parent]
+
+      params_encoded = params.empty? ? '' : "?#{params.to_param}"
+
+      url  = id ? "#{self.url}/#{type}/#{id}#{params_encoded}" : "#{self.url}/#{type}/#{params_encoded}"
 
       @response = Configuration.client.post url, document
       MultiJson.decode(@response.body)
-
     ensure
       curl = %Q|curl -X POST "#{url}" -d '#{document}'|
       logged([type, id].join('/'), curl)
@@ -184,7 +189,7 @@ module Tire
       logged(id, curl)
     end
 
-    def retrieve(type, id)
+    def retrieve(type, id, options={})
       raise ArgumentError, "Please pass a document ID" unless id
 
       type      = Utils.escape(type)
@@ -192,12 +197,13 @@ module Tire
       @response = Configuration.client.get url
 
       h = MultiJson.decode(@response.body)
-      if Configuration.wrapper == Hash then h
+      wrapper = options[:wrapper] || Configuration.wrapper
+      if wrapper == Hash then h
       else
         return nil if h['exists'] == false
         document = h['_source'] || h['fields'] || {}
         document.update('id' => h['_id'], '_type' => h['_type'], '_index' => h['_index'], '_version' => h['_version'])
-        Configuration.wrapper.new(document)
+        wrapper.new(document)
       end
 
     ensure

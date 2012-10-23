@@ -121,6 +121,16 @@ module Tire
         self
       end
 
+      def min_score(value)
+        @min_score = value
+        self
+      end
+
+      def track_scores(value)
+        @track_scores = value
+        self
+      end
+
       def perform
         @response = Configuration.client.get(self.url + self.params, self.to_json)
         if @response.failure?
@@ -139,7 +149,7 @@ module Tire
       end
 
       def to_hash
-        @options.delete(:payload) || begin
+        @options[:payload] || begin
           request = {}
           request.update( { :indices_boost => @indices_boost } ) if @indices_boost
           request.update( { :query  => @query.to_hash } )    if @query
@@ -155,11 +165,13 @@ module Tire
           request.update( { :script_fields => @script_fields } ) if @script_fields
           request.update( { :version => @version } )         if @version
           request.update( { :explain => @explain } )         if @explain
+          request.update( { :min_score => @min_score } )     if @min_score
+          request.update( { :track_scores => @track_scores } ) if @track_scores
           request
         end
       end
 
-      def to_json
+      def to_json(options={})
         payload = to_hash
         # TODO: Remove when deprecated interface is removed
         if payload.is_a?(String)

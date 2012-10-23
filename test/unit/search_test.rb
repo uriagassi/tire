@@ -232,6 +232,15 @@ module Tire
           assert_equal [{'title' => 'desc'}, '_score'], hash['sort']
         end
 
+        should "allow to track scores" do
+          s = Search::Search.new('index') do
+            sort { by :title }
+            track_scores true
+          end
+
+          assert_equal 'true', s.to_hash[:track_scores].to_json
+        end
+
       end
 
       context "facets" do
@@ -394,23 +403,27 @@ module Tire
 
       end
 
-      context "when using partial fields" do
-
-        should "not set partial fields if not called" do
+      context "with min_score" do
+        should "allow to specify minimum score for returned documents" do
           s = Search::Search.new('index') do
+            query { string 'foo' }
+            min_score 0.5
           end
-          hash = MultiJson.decode( s.to_json )
-          assert_equal nil, hash['partial_fields']
+
+          assert_equal( '0.5', s.to_hash[:min_score].to_json )
         end
+      end
 
-        should "add partial field when called" do
+      context "with partial fields" do
+
+        should "add partial_fields config" do
           s = Search::Search.new('index') do
-            partial_field 'name', include: 'name_*'
+            partial_field 'name', :include => 'name_*'
           end
+
           hash = MultiJson.decode( s.to_json )
           assert_equal({'name' => { 'include' => 'name_*'} }, hash['partial_fields'])
         end
-
 
       end
 

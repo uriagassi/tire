@@ -8,7 +8,11 @@ module Tire
       end
 
       def term(field, value, options={})
-        query = { field => { :term => value }.update(options) }
+        query = if value.is_a?(Hash)
+          { field => value.to_hash }
+        else
+          { field => { :term => value }.update(options) }
+        end
         @value = { :term => query }
       end
 
@@ -75,8 +79,8 @@ module Tire
         @value
       end
 
-      def all
-        @value = { :match_all => {} }
+      def all(options = {})
+        @value = { :match_all => options }
         @value
       end
 
@@ -88,7 +92,7 @@ module Tire
         @value
       end
 
-      def to_json
+      def to_json(options={})
         to_hash.to_json
       end
 
@@ -156,7 +160,7 @@ module Tire
         @value
       end
 
-      def to_json
+      def to_json(options={})
         to_hash.to_json
       end
     end
@@ -177,7 +181,7 @@ module Tire
         @value.update(@options)
       end
 
-      def to_json
+      def to_json(options={})
         to_hash.to_json
       end
     end

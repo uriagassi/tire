@@ -29,6 +29,17 @@ module Tire::Search
       should "allow search for single term passing an options hash" do
         assert_equal( { :term => { :foo => { :term => 'bar', :boost => 2.0 } } }, Query.new.term(:foo, 'bar', :boost => 2.0) )
       end
+
+      should "allow complex term queries" do
+        assert_equal( { :term => { :foo => { :field => 'bar', :boost => 2.0 } } }, Query.new.term(:foo, {:field => 'bar', :boost => 2.0}) )
+      end
+
+      should "allow complex term queries with Hash-like objects" do
+        assert_equal(
+          { :term => { :foo => { :field => 'bar', :boost => 2.0 } } },
+          Query.new.term(:foo, Hashr.new( :field => 'bar', :boost => 2.0 ))
+        )
+      end
     end
 
     context "Terms query" do
@@ -104,6 +115,10 @@ module Tire::Search
     context "All query" do
       should "search for all documents" do
         assert_equal( { :match_all => { } }, Query.new.all )
+      end
+
+      should "allow passing arguments" do
+        assert_equal( { :match_all => {:boost => 1.2} }, Query.new.all(:boost => 1.2) )
       end
     end
 
